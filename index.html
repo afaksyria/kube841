@@ -10,96 +10,48 @@
       padding: 0;
       height: 100%;
       background: black;
-      overflow: hidden;
     }
-
     #reader {
       width: 100vw;
       height: 100vh;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-
-    #overlay {
-      position: absolute;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.8);
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 1.2em;
-      z-index: 10;
-    }
-
-    button {
-      padding: 15px 30px;
-      margin-top: 20px;
-      font-size: 1em;
-      border: none;
-      border-radius: 10px;
-      background: #00c853;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #00b342;
     }
   </style>
 </head>
 <body>
   <div id="reader"></div>
 
-  <div id="overlay">
-    <div id="message">Code erkannt: <span id="code"></span></div>
-    <button onclick="openLink()">Weiter</button>
-  </div>
-
   <script>
     const html5QrCode = new Html5Qrcode("reader");
-    let scannedText = null;
-    let cameraId = null;
 
     async function onScanSuccess(decodedText, decodedResult) {
-      if (scannedText) return;
-      scannedText = decodedText;
+      if (localStorage.getItem("alreadyScanned") === "1") return;
+
+      localStorage.setItem("alreadyScanned", "1"); // 🔒 قفل المسح بعد أول قراءة
 
       try {
-        await html5QrCode.stop();
+        await html5QrCode.stop(); // ⛔ أوقف الكاميرا
       } catch (e) {
         console.error("Fehler beim Stoppen der Kamera", e);
       }
 
-      // Zeige die Bestätigungsansicht
-      document.getElementById("code").innerText = decodedText;
-      document.getElementById("overlay").style.display = "flex";
-    }
-
-    function openLink() {
-      const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(scannedText);
+      // ✅ الآن فقط نفتح الرابط
+      const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
       window.location.href = url;
     }
 
     Html5Qrcode.getCameras().then(devices => {
       if (devices && devices.length) {
-        const backCam = devices.find(d => /back|rear|rück|environment/i.test(d.label));
-        cameraId = backCam ? backCam.id : devices[0].id;
-
+        const cameraId = devices[0].id;
         html5QrCode.start(cameraId, {
           fps: 10,
           qrbox: { width: 300, height: 300 }
         }, onScanSuccess);
       }
-    }).catch(err => {
-      console.error("Kamerafehler:", err);
     });
 
+    // 🧹 إعادة السماح بالمسح لو رجع المستخدم للصفحة لاحقًا
     window.addEventListener("beforeunload", () => {
-      scannedText = null;
+      localStorage.removeItem("alreadyScanned");
     });
   </script>
 </body>
