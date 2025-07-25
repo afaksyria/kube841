@@ -23,13 +23,17 @@
 
   <script>
     const html5QrCode = new Html5Qrcode("reader");
+    let scanned = false; // ✅ متغير لمنع القراءة المكررة
 
     function onScanSuccess(decodedText, decodedResult) {
+      if (scanned) return; // ✅ تجاهل أي قراءة بعد أول مرة
+      scanned = true;      // ✅ منع التكرار
+
       html5QrCode.stop().then(() => {
         const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
         window.location.href = url;
       }).catch(err => {
-        console.error("Konnte Kamera nicht stoppen", err);
+        console.error("Fehler beim Stoppen der Kamera", err);
       });
     }
 
@@ -37,10 +41,7 @@
       const qrBoxSize = Math.min(window.innerWidth, window.innerHeight) * 0.7;
       const config = {
         fps: 10,
-        qrbox: {
-          width: qrBoxSize,
-          height: qrBoxSize
-        }
+        qrbox: { width: qrBoxSize, height: qrBoxSize }
       };
       html5QrCode.start(cameraId, config, onScanSuccess);
     }
@@ -52,7 +53,7 @@
         startScanner(cameraId);
       }
     }).catch(err => {
-      console.error("Camera error", err);
+      console.error("Kamerafehler", err);
     });
   </script>
 </body>
