@@ -39,11 +39,15 @@
         return;
       }
 
-      // Versuche die Rückkamera zu finden
-      const backCam = cameras.find(cam => cam.label.toLowerCase().includes("back")) || cameras[cameras.length - 1];
+      // نحاول نختار الكاميرا التي تحتوي على Rückkamera أو back في الاسم
+      const preferredCamera = cameras.find(cam =>
+        cam.label.toLowerCase().includes("rückkamera") ||
+        cam.label.toLowerCase().includes("back") ||
+        cam.label.toLowerCase().includes("rear")
+      ) || cameras[cameras.length - 1]; // وإذا ما وجد، ناخد آخر كاميرا
 
       html5QrCode.start(
-        backCam.id,
+        preferredCamera.id,
         { fps: 10, qrbox: 250 },
         onScanSuccess
       ).catch(err => {
