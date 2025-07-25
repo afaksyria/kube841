@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Kundenbesuch Scanner (Auto Start)</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    #reader {
+      width: 300px;
+      margin: auto;
+      margin-top: 50px;
+    }
+    h1 {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>📷 Kundenbesuch scannen</h1>
+  <div id="reader"></div>
+
+  <script>
+    function onScanSuccess(decodedText, decodedResult) {
+      const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
+      window.location.href = url;
+    }
+
+    window.onload = function() {
+      const html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader", { fps: 10, qrbox: 250 });
+      html5QrcodeScanner.render(onScanSuccess);
+    }
+  </script>
+</body>
+</html>
