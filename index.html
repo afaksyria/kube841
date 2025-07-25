@@ -64,11 +64,11 @@
     let cardNumber = null;
 
     async function onScanSuccess(decodedText) {
-      if (cardNumber !== null) return;
+      if (cardNumber !== null) return; // ✅ يمنع إعادة المسح
       cardNumber = decodedText;
 
       try {
-        await html5QrCode.stop(); // Stop the camera after first scan
+        await html5QrCode.stop(); // ⛔ يوقف الكاميرا بعد أول قراءة
       } catch (e) {
         console.error("Fehler beim Stoppen der Kamera", e);
       }
