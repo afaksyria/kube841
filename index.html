@@ -25,18 +25,22 @@
     const html5QrCode = new Html5Qrcode("reader");
     let scanned = false;
 
-    function onScanSuccess(decodedText, decodedResult) {
+    async function onScanSuccess(decodedText, decodedResult) {
       if (scanned) return;
 
-      scanned = true; // 🛑 أول خطوة: نمنع أي قراءة بعدها فوراً
+      scanned = true;
 
-      // أوقف الكاميرا
-      html5QrCode.stop().then(() => {
+      try {
+        await html5QrCode.stop(); // ⛔ أوقف الكاميرا وانتظر فعلاً توقفها قبل ما تفتح الرابط
+
+        // ✅ بعد التوقف فقط، افتح الرابط
         const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
         window.location.href = url;
-      }).catch(err => {
+
+      } catch (err) {
         console.error("Fehler beim Stoppen der Kamera", err);
-      });
+        scanned = false; // لو فشل الإيقاف، رجعنا للسماح بالمسح
+      }
     }
 
     Html5Qrcode.getCameras().then(devices => {
