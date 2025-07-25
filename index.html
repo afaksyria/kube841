@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>QR Scanner</title>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
-      background: #000;
-      overflow: hidden;
+      background: black;
     }
     #reader {
       width: 100vw;
@@ -23,40 +22,36 @@
 
   <script>
     const html5QrCode = new Html5Qrcode("reader");
-    let scanned = false;
 
     async function onScanSuccess(decodedText, decodedResult) {
-      if (scanned) return;
+      if (localStorage.getItem("alreadyScanned") === "1") return;
 
-      scanned = true;
+      localStorage.setItem("alreadyScanned", "1"); // 🔒 قفل المسح بعد أول قراءة
 
       try {
-        await html5QrCode.stop(); // ⛔ أوقف الكاميرا وانتظر فعلاً توقفها قبل ما تفتح الرابط
-
-        // ✅ بعد التوقف فقط، افتح الرابط
-        const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
-        window.location.href = url;
-
-      } catch (err) {
-        console.error("Fehler beim Stoppen der Kamera", err);
-        scanned = false; // لو فشل الإيقاف، رجعنا للسماح بالمسح
+        await html5QrCode.stop(); // ⛔ أوقف الكاميرا
+      } catch (e) {
+        console.error("Fehler beim Stoppen der Kamera", e);
       }
+
+      // ✅ الآن فقط نفتح الرابط
+      const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
+      window.location.href = url;
     }
 
     Html5Qrcode.getCameras().then(devices => {
       if (devices && devices.length) {
-        const backCam = devices.find(d => /back|rear|rück|environment/i.test(d.label));
-        const cameraId = backCam ? backCam.id : devices[0].id;
-
-        const config = {
+        const cameraId = devices[0].id;
+        html5QrCode.start(cameraId, {
           fps: 10,
-          qrbox: { width: window.innerWidth * 0.8, height: window.innerWidth * 0.8 }
-        };
-
-        html5QrCode.start(cameraId, config, onScanSuccess);
+          qrbox: { width: 300, height: 300 }
+        }, onScanSuccess);
       }
-    }).catch(err => {
-      console.error("Kamerafehler", err);
+    });
+
+    // 🧹 إعادة السماح بالمسح لو رجع المستخدم للصفحة لاحقًا
+    window.addEventListener("beforeunload", () => {
+      localStorage.removeItem("alreadyScanned");
     });
   </script>
 </body>
