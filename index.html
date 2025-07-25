@@ -2,14 +2,15 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>QR Scanner</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <title>Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
-    html, body {
+    body, html {
       margin: 0;
       padding: 0;
       height: 100%;
-      background: black;
+      overflow: hidden;
+      background-color: #000;
     }
     #reader {
       width: 100vw;
@@ -21,37 +22,34 @@
   <div id="reader"></div>
 
   <script>
-    const html5QrCode = new Html5Qrcode("reader");
-
-    async function onScanSuccess(decodedText, decodedResult) {
-      if (localStorage.getItem("alreadyScanned") === "1") return;
-
-      localStorage.setItem("alreadyScanned", "1"); // 🔒 قفل المسح بعد أول قراءة
-
-      try {
-        await html5QrCode.stop(); // ⛔ أوقف الكاميرا
-      } catch (e) {
-        console.error("Fehler beim Stoppen der Kamera", e);
-      }
-
-      // ✅ الآن فقط نفتح الرابط
+    function onScanSuccess(decodedText, decodedResult) {
       const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
       window.location.href = url;
     }
 
+    function startScanner(cameraId) {
+      const qrBoxSize = Math.min(window.innerWidth, window.innerHeight) * 0.7;
+
+      const config = {
+        fps: 10,
+        qrbox: {
+          width: qrBoxSize,
+          height: qrBoxSize
+        }
+      };
+
+      const html5QrCode = new Html5Qrcode("reader");
+      html5QrCode.start(cameraId, config, onScanSuccess);
+    }
+
     Html5Qrcode.getCameras().then(devices => {
       if (devices && devices.length) {
-        const cameraId = devices[0].id;
-        html5QrCode.start(cameraId, {
-          fps: 10,
-          qrbox: { width: 300, height: 300 }
-        }, onScanSuccess);
+        const backCam = devices.find(d => /back|rück|rear|environment/i.test(d.label));
+        const cameraId = backCam ? backCam.id : devices[0].id;
+        startScanner(cameraId);
       }
-    });
-
-    // 🧹 إعادة السماح بالمسح لو رجع المستخدم للصفحة لاحقًا
-    window.addEventListener("beforeunload", () => {
-      localStorage.removeItem("alreadyScanned");
+    }).catch(err => {
+      console.error("Camera error", err);
     });
   </script>
 </body>
