@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Kundenbesuch Scanner (Auto Start)</title>
+  <title>Kundenbesuch Scanner</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     body {
@@ -11,12 +10,11 @@
       text-align: center;
       margin: 0;
       padding: 20px;
-      background-color: #f4f4f4;
+      background-color: #f9f9f9;
     }
     #reader {
-      width: 300px;
-      margin: auto;
-      margin-top: 50px;
+      width: 320px;
+      margin: 50px auto;
     }
     h1 {
       color: #333;
@@ -28,16 +26,29 @@
   <div id="reader"></div>
 
   <script>
+    const html5QrCode = new Html5Qrcode("reader");
+
     function onScanSuccess(decodedText, decodedResult) {
       const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
       window.location.href = url;
     }
 
-    window.onload = function() {
-      const html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader", { fps: 10, qrbox: 250 });
-      html5QrcodeScanner.render(onScanSuccess);
-    }
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        html5QrCode.start(
+          { facingMode: "environment" }, // back camera
+          {
+            fps: 10,
+            qrbox: 250
+          },
+          onScanSuccess
+        ).catch(err => {
+          document.body.innerHTML += "<p>❌ Kamera konnte nicht gestartet werden: " + err + "</p>";
+        });
+      }
+    }).catch(err => {
+      document.body.innerHTML += "<p>❌ Kamera nicht gefunden: " + err + "</p>";
+    });
   </script>
 </body>
 </html>
