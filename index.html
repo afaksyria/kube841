@@ -30,13 +30,16 @@
 
     function onScanSuccess(decodedText, decodedResult) {
       const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
+      html5QrCode.stop(); // عشان ما يضل يقرأ نفس الكود أكثر من مرة
       window.location.href = url;
     }
 
     Html5Qrcode.getCameras().then(cameras => {
-      if (cameras && cameras.length) {
+      if (cameras && cameras.length > 0) {
+        // نحاول نختار الكاميرا الخلفية إن وُجدت
+        const backCamera = cameras.find(camera => camera.label.toLowerCase().includes('back')) || cameras[0];
         html5QrCode.start(
-          { facingMode: "environment" }, // back camera
+          backCamera.id,
           {
             fps: 10,
             qrbox: 250
