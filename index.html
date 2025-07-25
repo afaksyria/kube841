@@ -23,12 +23,14 @@
 
   <script>
     const html5QrCode = new Html5Qrcode("reader");
-    let scanned = false; // ✅ متغير لمنع القراءة المكررة
+    let scanned = false;
 
     function onScanSuccess(decodedText, decodedResult) {
-      if (scanned) return; // ✅ تجاهل أي قراءة بعد أول مرة
-      scanned = true;      // ✅ منع التكرار
+      if (scanned) return;
 
+      scanned = true; // 🛑 أول خطوة: نمنع أي قراءة بعدها فوراً
+
+      // أوقف الكاميرا
       html5QrCode.stop().then(() => {
         const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
         window.location.href = url;
@@ -37,20 +39,17 @@
       });
     }
 
-    function startScanner(cameraId) {
-      const qrBoxSize = Math.min(window.innerWidth, window.innerHeight) * 0.7;
-      const config = {
-        fps: 10,
-        qrbox: { width: qrBoxSize, height: qrBoxSize }
-      };
-      html5QrCode.start(cameraId, config, onScanSuccess);
-    }
-
     Html5Qrcode.getCameras().then(devices => {
       if (devices && devices.length) {
         const backCam = devices.find(d => /back|rear|rück|environment/i.test(d.label));
         const cameraId = backCam ? backCam.id : devices[0].id;
-        startScanner(cameraId);
+
+        const config = {
+          fps: 10,
+          qrbox: { width: window.innerWidth * 0.8, height: window.innerWidth * 0.8 }
+        };
+
+        html5QrCode.start(cameraId, config, onScanSuccess);
       }
     }).catch(err => {
       console.error("Kamerafehler", err);
