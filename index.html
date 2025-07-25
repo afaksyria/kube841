@@ -2,55 +2,70 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Kundenbesuch Scanner</title>
+  <title>Kundenbesuch Scanner – Kamera wählen</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
-      margin: 0;
       padding: 20px;
       background-color: #f9f9f9;
     }
     #reader {
       width: 320px;
-      margin: 50px auto;
+      margin: 20px auto;
     }
-    h1 {
-      color: #333;
+    select {
+      padding: 8px;
+      font-size: 16px;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
   <h1>📷 Kundenbesuch scannen</h1>
+  <p>🔽 Kamera auswählen:</p>
+  <select id="cameraSelect"></select>
   <div id="reader"></div>
 
   <script>
     const html5QrCode = new Html5Qrcode("reader");
+    const select = document.getElementById("cameraSelect");
 
-    function onScanSuccess(decodedText, decodedResult) {
+    function onScanSuccess(decodedText) {
       const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
-      html5QrCode.stop(); // عشان ما يضل يقرأ نفس الكود أكثر من مرة
+      html5QrCode.stop(); // Stop scanning after successful scan
       window.location.href = url;
     }
 
     Html5Qrcode.getCameras().then(cameras => {
-      if (cameras && cameras.length > 0) {
-        // نحاول نختار الكاميرا الخلفية إن وُجدت
-        const backCamera = cameras.find(camera => camera.label.toLowerCase().includes('back')) || cameras[0];
-        html5QrCode.start(
-          backCamera.id,
-          {
-            fps: 10,
-            qrbox: 250
-          },
-          onScanSuccess
-        ).catch(err => {
-          document.body.innerHTML += "<p>❌ Kamera konnte nicht gestartet werden: " + err + "</p>";
-        });
+      if (cameras.length === 0) {
+        document.body.innerHTML += "<p>❌ Keine Kamera gefunden</p>";
+        return;
       }
+
+      cameras.forEach(cam => {
+        const option = document.createElement("option");
+        option.value = cam.id;
+        option.text = cam.label || `Kamera ${select.length + 1}`;
+        select.appendChild(option);
+      });
+
+      // Start with the first camera
+      const startCamera = cameras[0].id;
+      select.value = startCamera;
+      html5QrCode.start(startCamera, { fps: 10, qrbox: 250 }, onScanSuccess);
+
+      // Handle camera switching
+      select.addEventListener("change", () => {
+        html5QrCode.stop().then(() => {
+          html5QrCode.start(select.value, { fps: 10, qrbox: 250 }, onScanSuccess);
+        }).catch(err => {
+          console.error("❌ Fehler beim Kamerawechsel:", err);
+        });
+      });
     }).catch(err => {
-      document.body.innerHTML += "<p>❌ Kamera nicht gefunden: " + err + "</p>";
+      document.body.innerHTML += "<p>❌ Fehler beim Kamerazugriff: " + err + "</p>";
     });
   </script>
 </body>
