@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Kundenbesuch Scanner – Kamera wählen</title>
+  <title>Kundenbesuch Scanner – Rückkamera</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     body {
@@ -15,26 +15,21 @@
       width: 320px;
       margin: 20px auto;
     }
-    select {
-      padding: 8px;
-      font-size: 16px;
-      margin-top: 10px;
+    h1 {
+      color: #333;
     }
   </style>
 </head>
 <body>
   <h1>📷 Kundenbesuch scannen</h1>
-  <p>🔽 Kamera auswählen:</p>
-  <select id="cameraSelect"></select>
   <div id="reader"></div>
 
   <script>
     const html5QrCode = new Html5Qrcode("reader");
-    const select = document.getElementById("cameraSelect");
 
     function onScanSuccess(decodedText) {
       const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
-      html5QrCode.stop(); // Stop scanning after successful scan
+      html5QrCode.stop(); // Stop scanning after success
       window.location.href = url;
     }
 
@@ -44,25 +39,15 @@
         return;
       }
 
-      cameras.forEach(cam => {
-        const option = document.createElement("option");
-        option.value = cam.id;
-        option.text = cam.label || `Kamera ${select.length + 1}`;
-        select.appendChild(option);
-      });
+      // Versuche die Rückkamera zu finden
+      const backCam = cameras.find(cam => cam.label.toLowerCase().includes("back")) || cameras[cameras.length - 1];
 
-      // Start with the first camera
-      const startCamera = cameras[0].id;
-      select.value = startCamera;
-      html5QrCode.start(startCamera, { fps: 10, qrbox: 250 }, onScanSuccess);
-
-      // Handle camera switching
-      select.addEventListener("change", () => {
-        html5QrCode.stop().then(() => {
-          html5QrCode.start(select.value, { fps: 10, qrbox: 250 }, onScanSuccess);
-        }).catch(err => {
-          console.error("❌ Fehler beim Kamerawechsel:", err);
-        });
+      html5QrCode.start(
+        backCam.id,
+        { fps: 10, qrbox: 250 },
+        onScanSuccess
+      ).catch(err => {
+        document.body.innerHTML += "<p>❌ Fehler beim Starten der Kamera: " + err + "</p>";
       });
     }).catch(err => {
       document.body.innerHTML += "<p>❌ Fehler beim Kamerazugriff: " + err + "</p>";
