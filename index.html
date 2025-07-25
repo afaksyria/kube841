@@ -2,26 +2,43 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Kundenbesuch Scanner – Rückkamera</title>
+  <title>Kundenbesuch Scanner – Rückkamera Vollbild</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
-    body {
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: black;
       font-family: sans-serif;
-      text-align: center;
-      padding: 20px;
-      background-color: #f9f9f9;
     }
+
     #reader {
-      width: 320px;
-      margin: 20px auto;
+      width: 100vw;
+      height: 100vh;
     }
-    h1 {
-      color: #333;
+
+    #overlay {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      color: white;
+      font-size: 20px;
+      background-color: rgba(0,0,0,0.6);
+      padding: 10px 20px;
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>📷 Kundenbesuch scannen</h1>
+  <div id="overlay">📷 Kundenbesuch scannen</div>
   <div id="reader"></div>
 
   <script>
@@ -29,33 +46,31 @@
 
     function onScanSuccess(decodedText) {
       const url = "https://n8n.furat-spedition.de/webhook/kundenbesuch?kdnr=" + encodeURIComponent(decodedText);
-      html5QrCode.stop(); // Stop scanning after success
+      html5QrCode.stop(); // stop after success
       window.location.href = url;
     }
 
     Html5Qrcode.getCameras().then(cameras => {
       if (cameras.length === 0) {
-        document.body.innerHTML += "<p>❌ Keine Kamera gefunden</p>";
+        document.body.innerHTML = "<p style='color:white;text-align:center;'>❌ Keine Kamera gefunden</p>";
         return;
       }
 
-      // نحاول نختار الكاميرا التي تحتوي على Rückkamera أو back في الاسم
       const preferredCamera = cameras.find(cam =>
-        cam.label.toLowerCase().includes("rückkamera") ||
+        cam.label.toLowerCase().includes("rück") ||
         cam.label.toLowerCase().includes("back") ||
         cam.label.toLowerCase().includes("rear")
-      ) || cameras[cameras.length - 1]; // وإذا ما وجد، ناخد آخر كاميرا
+      ) || cameras[cameras.length - 1];
 
       html5QrCode.start(
         preferredCamera.id,
-        { fps: 10, qrbox: 250 },
+        { fps: 10, qrbox: { width: 300, height: 300 } },
         onScanSuccess
       ).catch(err => {
-        document.body.innerHTML += "<p>❌ Fehler beim Starten der Kamera: " + err + "</p>";
+        document.body.innerHTML += "<p style='color:white;text-align:center;'>❌ Fehler: " + err + "</p>";
       });
-    }).catch(err => {
-      document.body.innerHTML += "<p>❌ Fehler beim Kamerazugriff: " + err + "</p>";
     });
   </script>
 </body>
 </html>
+
