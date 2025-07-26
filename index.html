@@ -10,7 +10,6 @@
       padding: 0;
       height: 100%;
       background: black;
-      font-family: Arial, sans-serif;
       overflow: hidden;
     }
 
@@ -35,24 +34,23 @@
       justify-content: center;
       flex-direction: column;
       z-index: 100;
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       text-align: center;
     }
 
     #overlay button {
-      margin-top: 30px;
-      padding: 15px 40px;
+      margin-top: 25px;
+      padding: 15px 35px;
       font-size: 1.2rem;
-      border: none;
-      border-radius: 8px;
       background-color: #00c853;
+      border: none;
+      border-radius: 10px;
       color: white;
       cursor: pointer;
-      transition: background-color 0.3s;
     }
 
     #overlay button:hover {
-      background-color: #009d3f;
+      background-color: #009b3a;
     }
   </style>
 </head>
@@ -82,7 +80,7 @@
       try {
         await html5QrCode.stop();
       } catch (e) {
-        console.error("Kamera konnte nicht gestoppt werden:", e);
+        console.error("Fehler beim Stoppen der Kamera:", e);
       }
 
       document.getElementById("code").innerText = cardNumber;
@@ -100,18 +98,12 @@
 
       html5QrCode.start(
         cameraId,
-        { fps: 10, qrbox: { width: 300, height: 300 } },
-        onScanSuccess,
-        error => { /* keine Aktion bei Fehler */ }
+        { fps: 10 }, // 🔴 ohne qrbox = kein weißer Rahmen!
+        onScanSuccess
       );
     }).catch(err => {
-      console.error("Fehler beim Abrufen der Kameras:", err);
-      alert("Fehler beim Zugriff auf Kamera: " + err);
-    });
-
-    window.addEventListener("beforeunload", () => {
-      scanned = false;
-      cardNumber = "";
+      console.error("Fehler beim Kamerazugriff:", err);
+      alert("Kamera konnte nicht gestartet werden: " + err);
     });
   </script>
 </body>
